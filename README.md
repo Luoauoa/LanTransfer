@@ -195,7 +195,7 @@ GUI 基于 Python 标准库 Tkinter，所有后台操作在独立线程中运行
 - GitHub Actions：push tag 自动构建 Windows `.exe`，发布到 Releases
 - Windows 用户下载 `.exe` 即用，无需安装 Python
 
-### v2.0 — GUI 图形界面（2026-05-28）
+### v2.0 — GUI 图形界面（2026-05-27）
 
 - Tkinter GUI 图形界面（接收/发送双标签页）
 - 文件选择对话框，无需手动输入路径
