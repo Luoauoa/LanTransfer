@@ -9,10 +9,14 @@
 ### macOS / Linux（一键安装）
 
 ```bash
+# 方式一：GitHub 直连（推荐）
 curl -fsSL https://raw.githubusercontent.com/Luoauoa/LanTransfer/main/install.sh | bash
+
+# 方式二：jsDelivr CDN 镜像（国内访问）
+curl -fsSL https://cdn.jsdelivr.net/gh/Luoauoa/LanTransfer@main/install.sh | bash
 ```
 
-脚本自动完成：下载程序 → 检测 Python+tkinter（缺了自动装）→ 创建启动器。
+脚本自动完成：下载程序 → 检测 Python+tkinter（缺了自动装）→ 创建启动器。若下载失败，脚本会自动切换镜像源重试。
 
 ### Windows（下载即用）
 

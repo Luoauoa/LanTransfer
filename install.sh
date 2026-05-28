@@ -4,20 +4,48 @@
 
 set -e
 INSTALL_DIR="${HOME}/lantransfer"
-SCRIPT_URL="https://raw.githubusercontent.com/Luoauoa/LanTransfer/main/lantransfer.py"
+
+# 镜像源列表（按优先级排列）
+MIRRORS=(
+    "https://raw.githubusercontent.com/Luoauoa/LanTransfer/main/lantransfer.py"
+    "https://cdn.jsdelivr.net/gh/Luoauoa/LanTransfer@main/lantransfer.py"
+    "https://github.com/Luoauoa/LanTransfer/raw/main/lantransfer.py"
+)
 
 echo "=== LanTransfer 安装 ==="
 echo "安装目录: ${INSTALL_DIR}"
 mkdir -p "${INSTALL_DIR}"
 
-# 下载脚本
+# 从镜像源下载脚本
+download_file() {
+    local url="$1"
+    local output="$2"
+    if command -v curl &>/dev/null; then
+        curl -fsSL --connect-timeout 10 "$url" -o "$output" 2>/dev/null
+    elif command -v wget &>/dev/null; then
+        wget -q --timeout=10 "$url" -O "$output" 2>/dev/null
+    else
+        return 1
+    fi
+}
+
 echo "下载 lantransfer.py ..."
-if command -v curl &>/dev/null; then
-    curl -fsSL "${SCRIPT_URL}" -o "${INSTALL_DIR}/lantransfer.py"
-elif command -v wget &>/dev/null; then
-    wget -q "${SCRIPT_URL}" -O "${INSTALL_DIR}/lantransfer.py"
-else
-    echo "错误: 需要 curl 或 wget"
+DOWNLOAD_OK=false
+for url in "${MIRRORS[@]}"; do
+    echo "  尝试: $(echo "$url" | sed 's|/raw/|/…/|;s|/main/|/…/|')"
+    if download_file "$url" "${INSTALL_DIR}/lantransfer.py"; then
+        DOWNLOAD_OK=true
+        echo "  ✓ 下载成功"
+        break
+    fi
+done
+
+if [ "$DOWNLOAD_OK" = false ]; then
+    echo "错误: 无法从任何镜像源下载 lantransfer.py"
+    echo ""
+    echo "请手动下载:"
+    echo "  1. 访问 https://github.com/Luoauoa/LanTransfer/releases"
+    echo "  2. 或克隆仓库: git clone https://github.com/Luoauoa/LanTransfer.git"
     exit 1
 fi
 chmod +x "${INSTALL_DIR}/lantransfer.py"
