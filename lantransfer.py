@@ -46,15 +46,74 @@ DISCOVER_MAGIC = b"LANTRANSFER_DISCOVER"
 
 def get_local_ip():
     """获取本机局域网 IP 地址。"""
+    def _is_private(ip):
+        try:
+            parts = [int(p) for p in ip.split(".")]
+            if len(parts) != 4:
+                return False
+            a, b = parts[0], parts[1]
+            if a == 10:
+                return True
+            if a == 172 and 16 <= b <= 31:
+                return True
+            if a == 192 and b == 168:
+                return True
+            return False
+        except (ValueError, IndexError):
+            return False
+
+    candidates = []
+
+    # Strategy 1: default route via public DNS IP
+    for target in (("1.1.1.1", 1), ("8.8.8.8", 1)):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(target)
+            ip = s.getsockname()[0]
+            if ip not in candidates and not ip.startswith("127."):
+                candidates.append(ip)
+        except Exception:
+            pass
+        finally:
+            s.close()
+
+    # Strategy 2: enumerate local addresses from hostname
+    try:
+        hostname = socket.gethostname()
+        for info in socket.getaddrinfo(hostname, None, socket.AF_INET):
+            ip = info[4][0]
+            if ip not in candidates and not ip.startswith("127."):
+                candidates.append(ip)
+    except Exception:
+        pass
+
+    # Strategy 3: original approach (connect to 10.x)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(("10.255.255.255", 1))
         ip = s.getsockname()[0]
+        if ip not in candidates and not ip.startswith("127."):
+            candidates.append(ip)
     except Exception:
-        ip = "127.0.0.1"
+        pass
     finally:
         s.close()
-    return ip
+
+    # Prefer standard private LAN IPs
+    for ip in candidates:
+        if _is_private(ip):
+            return ip
+
+    # Fallback: any non-special IPv4
+    for ip in candidates:
+        try:
+            first = int(ip.split(".")[0])
+            if first not in (127, 0, 169, 198, 224, 240, 255):
+                return ip
+        except Exception:
+            continue
+
+    return candidates[0] if candidates else "127.0.0.1"
 
 
 def compute_sha256(filepath):
